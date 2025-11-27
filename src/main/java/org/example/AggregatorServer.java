@@ -15,11 +15,9 @@ import io.netty.handler.codec.http.HttpServerCodec;
 public class AggregatorServer {
 
     private static final int PORT = 8080;
-    // Redis connection string - assumes default local Redis
     private static final String REDIS_URI = "redis://localhost:6379";
 
     public static void main(String[] args) throws Exception {
-        // Initialize Redis Client (Single connection shared)
         RedisClient redisClient = RedisClient.create(REDIS_URI);
         StatefulRedisConnection<String, String> redisConnection = redisClient.connect();
         AggregationService aggregationService = new AggregationService(redisConnection);
@@ -36,7 +34,6 @@ public class AggregatorServer {
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new HttpServerCodec());
                             ch.pipeline().addLast(new HttpObjectAggregator(65536));
-                            // Custom Handler for /api/dashboard
                             ch.pipeline().addLast(new DashboardHandler(aggregationService));
                         }
                     });

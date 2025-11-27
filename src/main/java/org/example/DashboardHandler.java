@@ -32,7 +32,6 @@ public class DashboardHandler extends SimpleChannelInboundHandler<FullHttpReques
             return;
         }
 
-        // Non-blocking call: Trigger service and attach listener
         aggregationService.getAggregatedData()
                 .thenAccept(responseObject -> {
                     try {
@@ -53,7 +52,6 @@ public class DashboardHandler extends SimpleChannelInboundHandler<FullHttpReques
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
 
-        // Write and flush, then close if not keep-alive (simplified for this task)
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 

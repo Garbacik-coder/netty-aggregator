@@ -18,7 +18,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.example.AggregatorServer</mainClass>
+                  <mainClass>org.example.AggregatorServer</mainClass>
                 </transformer>
               </transformers>
             </configuration>

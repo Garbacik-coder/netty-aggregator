@@ -14,7 +14,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class AggregationService {
 
-    // API URLs [cite: 9, 10, 11, 12, 13]
     private static final String WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=51.107883&longitude=17.038538&current_weather=true";
     private static final String FACT_URL = "https://uselessfacts.jsph.pl/api/v2/facts/random";
     private static final String IP_URL = "https://api.ipify.org/?format=json";
@@ -33,12 +32,10 @@ public class AggregationService {
     }
 
     public CompletableFuture<AppResponse> getAggregatedData() {
-        // Launch 3 requests in parallel
         var weatherFuture = fetchData("weather", WEATHER_URL);
         var factFuture = fetchData("fact", FACT_URL);
         var ipFuture = fetchData("ip", IP_URL);
 
-        // Aggregate results [cite: 3, 14]
         return CompletableFuture.allOf(weatherFuture, factFuture, ipFuture)
                 .thenApply(v -> {
                     JsonNode weather = weatherFuture.join();
@@ -48,10 +45,6 @@ public class AggregationService {
                 });
     }
 
-    /**
-     * Tries to fetch from API. If fails, tries to fetch from Redis.
-     * If successful, updates Redis asynchronously.
-     */
     private CompletableFuture<JsonNode> fetchData(String key, String url) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -63,7 +56,6 @@ public class AggregationService {
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
                         String body = response.body();
-                        // Update cache async (fire and forget)
                         redisConnection.async().setex(key, 60, body);
                         return parseJson(body);
                     } else {
@@ -71,14 +63,12 @@ public class AggregationService {
                     }
                 })
                 .exceptionallyCompose(ex -> {
-                    // Fallback to Redis on error
                     System.err.println("API failed for " + key + ", checking Redis. Error: " + ex.getMessage());
                     return redisConnection.async().get(key)
                             .thenApply(cachedValue -> {
                                 if (cachedValue != null) {
                                     return parseJson(cachedValue);
                                 } else {
-                                    // If neither API nor Redis works, return error JSON
                                     return mapper.createObjectNode().put("error", "Service unavailable");
                                 }
                             });
